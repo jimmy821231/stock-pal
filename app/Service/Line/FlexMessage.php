@@ -37,8 +37,6 @@ use LINE\Constants\MessageType;
 class FlexMessage
 {
     /**
-     * Create sample restaurant flex message
-     *
      * @param $stockInfo
      * @return FlexMessageModel
      */

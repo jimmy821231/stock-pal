@@ -42,9 +42,9 @@ class WebhookController extends Controller
             if ($event instanceof MessageEvent) {
                 Log::info('get Message event');
                 $this->lineMessageService->handelMessage($event);
-//            } elseif ($event instanceof PostbackEvent) {
-//                Log::info('get PostbackAction event');
-//                $this->lineMessageService->handelPostbackAction($event);
+            } elseif ($event instanceof PostbackEvent) {
+                Log::info('get PostbackAction event');
+                $this->lineMessageService->handelPostbackAction($event);
             }
         }
         Log::info('input', $request->all());

@@ -15,7 +15,24 @@ class FinmindService
             'base_uri' => 'https://api.finmindtrade.com/api/'
         ]);
     }
-    public function getStockInfo()
+
+    public function searchStock($stockId, $startDate = null)
+    {
+        $stockInfo = $this->getStockInfo();
+        $stockInfo = collect($stockInfo)->firstWhere('stock_id', $stockId);
+        if ($stockInfo) {
+            $startDate = $startDate ?: now()->subDays(3)->format('Y-m-d');
+            $endDate = $startDate ?: now()->format('Y-m-d');
+            $stockPrice = $this->getStockPrice($stockId, $startDate, $endDate);
+            $stockPrice = collect($stockPrice)->last();
+            $stockInfo['price'] = $stockPrice;
+            return $stockInfo;
+        } else {
+            return null;
+        }
+    }
+
+    protected function getStockInfo()
     {
         $result = $this->finmind('v4/data', [
             'dataset' => 'TaiwanStockInfo',
@@ -24,7 +41,7 @@ class FinmindService
         return $result['data'];
     }
 
-    public function getStockPrice($stockId, $startDate = null, $endDate = null)
+    protected function getStockPrice($stockId, $startDate = null, $endDate = null)
     {
         $startDate = $startDate ?: now()->format('Y-m-d');
         $endDate = $endDate ?: now()->format('Y-m-d');
@@ -39,7 +56,7 @@ class FinmindService
         return $result['data'];
     }
 
-    public function getStockPriceTick($stockId, $date = null)
+    protected function getStockPriceTick($stockId, $date = null)
     {
         $date = $date ?: now()->format('Y-m-d');
 
@@ -52,7 +69,7 @@ class FinmindService
         return $result['data'];
     }
 
-    public function getTrader()
+    protected function getTrader()
     {
         $result = $this->finmind('v4/data', [
             'dataset' => 'SecuritiesTraderInfo',
