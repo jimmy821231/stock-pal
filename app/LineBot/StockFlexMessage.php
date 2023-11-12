@@ -1,48 +1,34 @@
 <?php
-namespace App\Service\Line;
+namespace App\LineBot;
 
-use LINE\Clients\MessagingApi\Model\AltUri;
 use LINE\Clients\MessagingApi\Model\FlexBox;
 use LINE\Clients\MessagingApi\Model\FlexBubble;
 use LINE\Clients\MessagingApi\Model\FlexButton;
-use LINE\Clients\MessagingApi\Model\FlexComponent;
-use LINE\Clients\MessagingApi\Model\FlexIcon;
-use LINE\Clients\MessagingApi\Model\FlexImage;
-use LINE\Clients\MessagingApi\Model\FlexMessage as FlexMessageModel;
-use LINE\Clients\MessagingApi\Model\FlexSpan;
+use LINE\Clients\MessagingApi\Model\FlexMessage;
 use LINE\Clients\MessagingApi\Model\FlexText;
 use LINE\Clients\MessagingApi\Model\PostbackAction;
-use LINE\Clients\MessagingApi\Model\URIAction;
 use LINE\Constants\ActionType;
 use LINE\Constants\Flex\BubbleContainerSize;
 use LINE\Constants\Flex\ComponentButtonHeight;
 use LINE\Constants\Flex\ComponentButtonStyle;
 use LINE\Constants\Flex\ComponentFontSize;
 use LINE\Constants\Flex\ComponentFontWeight;
-use LINE\Constants\Flex\ComponentIconSize;
-use LINE\Constants\Flex\ComponentImageAspectMode;
-use LINE\Constants\Flex\ComponentImageAspectRatio;
-use LINE\Constants\Flex\ComponentImageSize;
 use LINE\Constants\Flex\ComponentLayout;
 use LINE\Constants\Flex\ComponentMargin;
-use LINE\Constants\Flex\ComponentSpaceSize;
 use LINE\Constants\Flex\ComponentSpacing;
 use LINE\Constants\Flex\ComponentType;
 use LINE\Constants\Flex\ContainerType;
 use LINE\Constants\MessageType;
 
-/**
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- */
-class FlexMessage
+class StockFlexMessage
 {
     /**
      * @param $stockInfo
-     * @return FlexMessageModel
+     * @return FlexMessage
      */
-    public static function get($stockInfo): FlexMessageModel
+    public static function get($stockInfo): FlexMessage
     {
-        return new FlexMessageModel([
+        return new FlexMessage([
             'type' => MessageType::FLEX,
             'altText' => $stockInfo['stock_name'].' 股價資訊',
             'contents' => new FlexBubble([
@@ -51,23 +37,6 @@ class FlexMessage
                 'footer' => self::createFooterBlock($stockInfo['stock_id']),
                 'size' => BubbleContainerSize::GIGA,
             ])
-        ]);
-    }
-
-    private static function createHeroBlock(): FlexComponent
-    {
-        return new FlexImage([
-            'type' => ComponentType::IMAGE,
-            'url' => 'https://example.com/cafe.png',
-            'size' => ComponentImageSize::FULL,
-            'aspectRatio' => ComponentImageAspectRatio::R20TO13,
-            'aspectMode' => ComponentImageAspectMode::COVER,
-            'action' => new URIAction([
-                'type' => ActionType::URI,
-                'label' => 'cafe hero',
-                'uri' => 'https://example.com',
-                'altUri' => new AltUri(['desktop' => 'https://example.com#desktop']),
-            ]),
         ]);
     }
 

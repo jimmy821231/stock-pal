@@ -1,6 +1,5 @@
 <?php
-
-namespace App\Service\Line;
+namespace App\LineBot;
 
 use LINE\Clients\MessagingApi\Model\DatetimePickerAction;
 use LINE\Clients\MessagingApi\Model\PostbackAction;

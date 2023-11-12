@@ -1,20 +1,21 @@
 <?php
-
 namespace App\Service;
-use App\Service\Line\QuickReplyMessage;
+
+use App\LineBot\StockFlexMessage;
+use App\LineBot\ManualMessage;
+use App\LineBot\QuickReplyMessage;
 use Illuminate\Support\Facades\Log;
+use LINE\Clients\MessagingApi\Model\BroadcastRequest;
 use LINE\Clients\MessagingApi\Model\Message;
 use LINE\Clients\MessagingApi\Model\ReplyMessageRequest;
 use LINE\Clients\MessagingApi\Model\TextMessage;
 use LINE\Constants\MessageType;
 use LINE\Laravel\Facades\LINEMessagingApi;
-use App\Service\Line\FlexMessage;
-
 
 class LineMessageService
 {
-    protected $client;
-    protected $finmindService;
+    protected FinmindService $finmindService;
+
     public function __construct(FinmindService $finmindService)
     {
         $this->finmindService = $finmindService;
@@ -30,7 +31,7 @@ class LineMessageService
             $stockInfo = $this->finmindService->searchStock($text);
             Log::info('stock', [$stockInfo]);
             if ($stockInfo) {
-                $this->replyMessage($replyToken, FlexMessage::get($stockInfo));
+                $this->replyMessage($replyToken, StockFlexMessage::get($stockInfo));
             } else {
                 $message = new TextMessage([
                     'text' => '查無此股票代碼, 請重新輸入',
@@ -55,40 +56,32 @@ class LineMessageService
                 break;
             case 'tick_snapshot':
                 $stockInfo = $this->finmindService->searchStock($data['stock_id']);
-                $message = new TextMessage([
-                    'text' => $stockInfo['price']['close'],
-                    'type' => MessageType::TEXT,
-                ]);
-                $this->replyMessage($replyToken, $message);
+                $currentPrice = $this->finmindService->getCurrentStockPrice($data['stock_id']);
+                if ($currentPrice) {
+                    $price = $currentPrice[0];
+                    $text = "{$stockInfo['stock_name']} {$price['date']} 股價: {$price['sell_price']}";
+                } else {
+                    $text = '查無即時股價資訊';
+                }
+                $this->replyTextMessage($replyToken, $text);
                 break;
             case 'trading_money':
                 $stockInfo = $this->finmindService->searchStock($data['stock_id']);
-                $message = new TextMessage([
-                    'text' => $stockInfo['price']['Trading_money'],
-                    'type' => MessageType::TEXT,
-                ]);
-                $this->replyMessage($replyToken, $message);
+                $text = "{$stockInfo['stock_name']} {$stockInfo['price']['date']} 交易總額: {$stockInfo['price']['Trading_money']}";
+                $this->replyTextMessage($replyToken, $text);
                 break;
             case 'trading_volume':
                 $stockInfo = $this->finmindService->searchStock($data['stock_id']);
-                Log::info('stockInfo', [$stockInfo]);
-                $message = new TextMessage([
-                    'text' => $stockInfo['price']['Trading_Volume'],
-                    'type' => MessageType::TEXT,
-                ]);
-                $this->replyMessage($replyToken, $message);
+                $text = "{$stockInfo['stock_name']} {$stockInfo['price']['date']} 交易量: {$stockInfo['price']['Trading_Volume']}";
+                $this->replyTextMessage($replyToken, $text);
                 break;
             case 'other_date':
                 $params = $postbackContent->getParams();
                 $stockInfo = $this->finmindService->searchStock($data['stock_id'], $params['date']);
                 if ($stockInfo) {
-                    $this->replyMessage($replyToken, FlexMessage::get($stockInfo));
+                    $this->replyMessage($replyToken, StockFlexMessage::get($stockInfo));
                 } else {
-                    $message = new TextMessage([
-                        'text' => '當日查無交易資料',
-                        'type' => MessageType::TEXT,
-                    ]);
-                    $this->replyMessage($replyToken, $message);
+                    $this->replyTextMessage($replyToken, '查無此日期資訊');
                 }
                 break;
             default:
@@ -99,6 +92,15 @@ class LineMessageService
                 $this->replyMessage($replyToken, $message);
                 break;
         }
+    }
+
+    private function replyTextMessage($replyToken, $text): void
+    {
+        $message = new TextMessage([
+            'text' => $text,
+            'type' => MessageType::TEXT,
+        ]);
+        $this->replyMessage($replyToken, $message);
     }
 
     public function manualPushMessage(string $title, string $content): void

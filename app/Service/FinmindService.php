@@ -56,23 +56,10 @@ class FinmindService
         return $result['data'];
     }
 
-    protected function getStockPriceTick($stockId, $date = null)
+    public function getCurrentStockPrice($stockId)
     {
-        $date = $date ?: now()->format('Y-m-d');
-
-        $result = $this->finmind('v4/data', [
-            'dataset' => 'TaiwanStockPriceTick',
+        $result = $this->finmind('v4/taiwan_stock_tick_snapshot', [
             'data_id' => $stockId,
-            'start_date' => $date,
-            'token' => config('finance.finmind_token'),
-        ]);
-        return $result['data'];
-    }
-
-    protected function getTrader()
-    {
-        $result = $this->finmind('v4/data', [
-            'dataset' => 'SecuritiesTraderInfo',
             'token' => config('finance.finmind_token'),
         ]);
         return $result['data'];
