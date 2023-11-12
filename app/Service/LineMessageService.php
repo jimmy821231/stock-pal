@@ -101,6 +101,34 @@ class LineMessageService
         }
     }
 
+    public function manualPushMessage(string $title, string $content): void
+    {
+        $this->pushMessage(ManualMessage::get($title, $content));
+    }
+
+    /**
+     * 群發訊息
+     * @param $message
+     * @return void
+     */
+    private function pushMessage($message): void
+    {
+        $request = new BroadcastRequest([
+            'messages' => [$message],
+        ]);
+        try {
+            LINEMessagingApi::broadcast($request);
+        } catch (\Exception $e) {
+            Log::error('broadcastRequest error', [$e->getMessage()]);
+        }
+    }
+
+    /**
+     * 回覆訊息
+     * @param string $replyToken
+     * @param Message $message
+     * @return void
+     */
     private function replyMessage(string $replyToken, Message $message): void
     {
         $request = new ReplyMessageRequest([
