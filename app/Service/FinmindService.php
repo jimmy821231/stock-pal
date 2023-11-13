@@ -1,14 +1,12 @@
 <?php
-
-
 namespace App\Service;
 
-
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 class FinmindService
 {
-    protected $client;
+    protected Client $client;
     public function __construct()
     {
         $this->client = new Client([
@@ -16,20 +14,25 @@ class FinmindService
         ]);
     }
 
-    public function searchStock($stockId, $startDate = null)
+    public function searchStock($stockId, $targetDate = null)
     {
-        $stockInfo = $this->getStockInfo();
-        $stockInfo = collect($stockInfo)->firstWhere('stock_id', $stockId);
-        if ($stockInfo) {
-            $startDate = $startDate ?: now()->subDays(3)->format('Y-m-d');
-            $endDate = $startDate ?: now()->format('Y-m-d');
-            $stockPrice = $this->getStockPrice($stockId, $startDate, $endDate);
-            $stockPrice = collect($stockPrice)->last();
-            $stockInfo['price'] = $stockPrice;
-            return $stockInfo;
-        } else {
+        $allStockInfo = $this->getStockInfo();
+        $specificStockInfo = collect($allStockInfo)->firstWhere('stock_id', $stockId);
+
+        if (!$specificStockInfo) {
             return null;
         }
+
+        $startDate = $targetDate ?: now()->subDays(3)->format('Y-m-d');
+        $endDate = $targetDate ?: now()->format('Y-m-d');
+        $stockPrice = $this->getStockPrice($stockId, $startDate, $endDate);
+        Log::info('Fetching stock price', compact('startDate', 'endDate', 'stockPrice'));
+
+        $priceData = collect($stockPrice);
+        $selectedPrice = $targetDate ? $priceData->firstWhere('date', $targetDate) : $priceData->last();
+        $specificStockInfo['price'] = $selectedPrice;
+
+        return $specificStockInfo;
     }
 
     protected function getStockInfo()

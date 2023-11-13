@@ -23,31 +23,25 @@ class WebhookController extends Controller
     public function getMessage(Request $request): \Illuminate\Http\JsonResponse
     {
         Log::info('input', $request->all());
-        $signature = $request->header('X-Line-Signature');
         try {
+            $signature = $request->header('X-Line-Signature');
             $secret = config('line_bot.channel_secret');
-            Log::info('secret', [$secret]);
-            Log::info('signature', [$signature]);
 
             $parsedEvents = EventRequestParser::parseEventRequest(
                 $request->getContent(), $secret, $signature
             );
         } catch (\Exception $e) {
-            Log::info('parsedEvents error', [$e->getMessage()]);
+            Log::error('parsedEvents error', [$e->getMessage()]);
             return response()->json(['error' => $e->getMessage()], 400);
         }
 
-        Log::info('parsedEvents success');
         foreach ($parsedEvents->getEvents() as $event) {
             if ($event instanceof MessageEvent) {
-                Log::info('get Message event');
-                $this->lineMessageService->handelMessage($event);
+                $this->lineMessageService->handleMessage($event);
             } elseif ($event instanceof PostbackEvent) {
-                Log::info('get PostbackAction event');
-                $this->lineMessageService->handelPostbackAction($event);
+                $this->lineMessageService->handlePostbackAction($event);
             }
         }
-        Log::info('input', $request->all());
         return response()->json(['success' => true]);
     }
 }

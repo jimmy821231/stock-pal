@@ -21,28 +21,25 @@ class LineMessageService
         $this->finmindService = $finmindService;
     }
 
-    public function handelMessage($event): void
+    public function handleMessage($event): void
     {
         $message = $event->getMessage();
         $text = $message->getText();
         $replyToken = $event->getReplyToken();
         Log::info("Got text message from $replyToken: $text");
+
         if (is_numeric($text)) {
             $stockInfo = $this->finmindService->searchStock($text);
             Log::info('stock', [$stockInfo]);
             if ($stockInfo) {
                 $this->replyMessage($replyToken, StockFlexMessage::get($stockInfo));
             } else {
-                $message = new TextMessage([
-                    'text' => '查無此股票代碼, 請重新輸入',
-                    'type' => MessageType::TEXT,
-                ]);
-                $this->replyMessage($replyToken, $message);
+                $this->replyTextMessage($replyToken, '查無此股票代碼, 請重新輸入');
             }
         }
     }
 
-    public function handelPostbackAction($event): void
+    public function handlePostbackAction($event): void
     {
         $data = [];
         $replyToken = $event->getReplyToken();
@@ -78,18 +75,14 @@ class LineMessageService
             case 'other_date':
                 $params = $postbackContent->getParams();
                 $stockInfo = $this->finmindService->searchStock($data['stock_id'], $params['date']);
-                if ($stockInfo) {
+                if ($stockInfo && $stockInfo['price']) {
                     $this->replyMessage($replyToken, StockFlexMessage::get($stockInfo));
                 } else {
                     $this->replyTextMessage($replyToken, '查無此日期資訊');
                 }
                 break;
             default:
-                $message = new TextMessage([
-                    'text' => '請選擇',
-                    'type' => MessageType::TEXT,
-                ]);
-                $this->replyMessage($replyToken, $message);
+                $this->replyTextMessage($replyToken, '查無此功能');
                 break;
         }
     }
